@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Python Pro Seviye Testi{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">Python Pro Test</a>
+            <div class="d-flex">
+                <div class="high-scores text-white d-flex flex-column flex-lg-row">
+                    <small class="me-lg-3 mb-1 mb-lg-0">Kişisel En Yüksek: <span id="personalHighScore">0</span>%</small>
+                    <small>Genel En Yüksek: <span id="globalHighScore">0</span>%</small>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">© 2024 Bu proje Emirhan Ay tarafından geliştirilmiştir.</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+    function updateHighScore() {
+        fetch('/api/high-score')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('personalHighScore').textContent = data.personal_best.toFixed(1);
+                document.getElementById('globalHighScore').textContent = data.global_best.toFixed(1);
+            })
+            .catch(error => console.error('Hata:', error));
+    }
+    
+    document.addEventListener('DOMContentLoaded', updateHighScore);
+    setInterval(updateHighScore, 30000);
+    </script>
+</body>
+</html> 

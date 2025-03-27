@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="mb-4">Python Pro Seviye Testi</h1>
+    <p class="lead">
+        Bu test, Python programlama dilindeki ileri seviye konulardaki bilginizi ölçmek için tasarlanmıştır.
+        Test içerisinde Discord, Flask, Yapay Zeka, Görüntü İşleme ve Doğal Dil İşleme konularından sorular bulunmaktadır.
+    </p>
+    <div class="mt-4">
+        <a href="{{ url_for('main.quiz') }}" class="btn btn-primary btn-lg">Teste Başla</a>
+    </div>
+</div>
+{% endblock %} 

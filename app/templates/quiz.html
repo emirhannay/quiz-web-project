@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="quiz-container">
+    <div class="progress mb-4">
+        <div id="quiz-progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+    </div>
+
+    <div id="question-container" class="mb-4">
+        <h4 id="category" class="text-muted mb-3"></h4>
+        <h3 id="question-text" class="mb-4"></h3>
+        
+        <div id="options-container" class="d-grid gap-2">
+        </div>
+    </div>
+
+    <div id="result-container" class="text-center d-none">
+        <h2 class="mb-4">Test Tamamlandı!</h2>
+        <div class="result-details mb-4">
+            <h3>Sonuçlarınız:</h3>
+            <p class="lead">
+                Doğru Sayısı: <span id="correct-count">0</span><br>
+                Başarı Yüzdesi: <span id="success-rate">0</span>%
+            </p>
+        </div>
+        <div class="high-scores mb-4">
+            <h4>Yüksek Skorlar:</h4>
+            <p>
+                Sizin En Yüksek: <span id="personal-best">0</span>%<br>
+                Genel En Yüksek: <span id="global-best">0</span>%
+            </p>
+        </div>
+        <button id="restart-button" class="btn btn-primary">Tekrar Dene</button>
+    </div>
+</div>
+
+<script>
+let currentQuestionIndex = 0;
+let questions = [];
+let score = 0;
+
+function loadQuestions() {
+    fetch('/api/questions')
+        .then(response => response.json())
+        .then(data => {
+            questions = data;
+            showQuestion(0);
+            updateProgress();
+        });
+}
+
+function showQuestion(index) {
+    if (index >= questions.length) {
+        showResults();
+        return;
+    }
+
+    const question = questions[index];
+    document.getElementById('category').textContent = question.category;
+    document.getElementById('question-text').textContent = question.question_text;
+
+    const optionsContainer = document.getElementById('options-container');
+    optionsContainer.innerHTML = '';
+
+    question.options.forEach((option, i) => {
+        const button = document.createElement('button');
+        button.className = 'btn btn-outline-primary';
+        button.textContent = option;
+        button.onclick = () => checkAnswer(i);
+        optionsContainer.appendChild(button);
+    });
+}
+
+function checkAnswer(selectedIndex) {
+    const question = questions[currentQuestionIndex];
+    
+    fetch('/api/check-answer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            question_id: question.id,
+            selected_answer: selectedIndex
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.correct) {
+            score++;
+        }
+        currentQuestionIndex++;
+        showQuestion(currentQuestionIndex);
+        updateProgress();
+    });
+}
+
+function updateProgress() {
+    const progress = (currentQuestionIndex / questions.length) * 100;
+    document.getElementById('quiz-progress').style.width = `${progress}%`;
+}
+
+function showResults() {
+    const percentage = (score / questions.length) * 100;
+    
+    document.getElementById('question-container').classList.add('d-none');
+    document.getElementById('result-container').classList.remove('d-none');
+    document.getElementById('correct-count').textContent = score;
+    document.getElementById('success-rate').textContent = percentage.toFixed(1);
+
+    fetch('/api/save-score', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            score: score,
+            max_score: questions.length
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('personal-best').textContent = data.personal_best.toFixed(1);
+        document.getElementById('global-best').textContent = data.global_best.toFixed(1);
+        document.getElementById('personalHighScore').textContent = data.personal_best.toFixed(1);
+        document.getElementById('globalHighScore').textContent = data.global_best.toFixed(1);
+    });
+}
+
+document.getElementById('restart-button').onclick = () => {
+    currentQuestionIndex = 0;
+    score = 0;
+    document.getElementById('result-container').classList.add('d-none');
+    document.getElementById('question-container').classList.remove('d-none');
+    loadQuestions();
+};
+
+document.addEventListener('DOMContentLoaded', loadQuestions);
+</script>
+
+<style>
+.quiz-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.progress {
+    height: 10px;
+}
+
+#options-container button {
+    text-align: left;
+    padding: 15px;
+    margin-bottom: 10px;
+    white-space: normal;
+    height: auto;
+}
+
+#options-container button:hover {
+    background-color: #e9ecef;
+}
+
+.result-details {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+</style>
+{% endblock %} 
